@@ -9,6 +9,7 @@ import io
 app = Flask(__name__)
 
 def get_emails_from_url(url):
+    """Extract emails from the provided URL."""
     emails = set()
     try:
         response = requests.get(url)
@@ -21,6 +22,7 @@ def get_emails_from_url(url):
     return emails
 
 def find_emails_by_keyword(keyword, num_results=10):
+    """Search for emails by keyword using Google search."""
     search_results = search(keyword, num=num_results)
     all_emails = set()
     for url in search_results:
@@ -30,17 +32,21 @@ def find_emails_by_keyword(keyword, num_results=10):
 
 @app.route('/api/emails', methods=['POST'])
 def get_emails():
+    """API endpoint to get emails based on a keyword search."""
     data = request.json
     keyword = data.get('keyword')
     num_results = data.get('num_results', 100)
     emails = find_emails_by_keyword(keyword, num_results)
 
+    # Write emails to CSV
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([keyword])  
+    writer.writerow([keyword])  # Add keyword as the header
     for email in emails:
         writer.writerow([email])
     output.seek(0)
+    
+    # Return the CSV file as a response
     return Response(
         output.getvalue(),
         mimetype="text/csv",
